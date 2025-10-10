@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Plugin.DTLS.Cert;
 
@@ -53,7 +48,7 @@ internal class CertGen
         var validTo = validFrom.AddYears(10);
         var cert = certificate.Create(nameBuilder.Build(), generator, validFrom, validTo, serialNumber);
         string outPath = Path.Combine(Directory.GetCurrentDirectory(), "Cert");
-        File.WriteAllBytes(Path.Combine(outPath, $"{name}.pfx"), cert.Export(X509ContentType.Pfx));
+        File.WriteAllBytes(Path.Combine(outPath, $"{name}.pfx"), cert.Export(X509ContentType.Pfx, "test"));
         File.WriteAllText(Path.Combine(outPath, $"{name}_private.key"), algorithm.ExportPkcs8PrivateKeyPem());
         File.WriteAllText(Path.Combine(outPath, $"{name}_public.key"), algorithm.ExportSubjectPublicKeyInfoPem());
         return cert;

@@ -1,6 +1,7 @@
 ﻿using Plugin.DTLS.ContentProcessor;
 using Plugin.DTLS.ContentTypes;
 using Plugin.DTLS.Enums;
+using Plugin.DTLS.Extensions;
 using Plugin.DTLS.Handshake;
 using Plugin.DTLS.HanshakeProccessor;
 using Plugin.DTLS.RecordProcessor;
@@ -14,6 +15,7 @@ public static class MainStorage
     static readonly HashSet<IHandshake> Handshakes =
     [
         new ClientHello(),
+        new ServerHello(),
         new HelloVerifyRequest(),
     ];
 
@@ -27,6 +29,14 @@ public static class MainStorage
     [
         new Alert(),
         new HandshakeHeader(),
+    ];
+
+    static readonly HashSet<IExtension> Extensions =
+    [
+        new ServerNameExtension(),
+        new EllipticCurvePointFormatsExtension(),
+        new EllipticCurvesExtension(),
+        new SignatureAlgorithmsExtension(),
     ];
 
     static readonly List<IContentProcessor> ContentProcessor =
@@ -74,6 +84,19 @@ public static class MainStorage
                 return item;
         }
         return null;
+    }
+
+    public static IExtension GetExtension(ExtensionType type)
+    {
+        foreach (var item in Extensions)
+        {
+            if (item.Type == type)
+                return item;
+        }
+        return new UnknownExtension()
+        { 
+            Type = type
+        };
     }
 
     public static void ProcessRecord(DtlsSession session, ref IRecord? record, in BinaryReaderBig reader)

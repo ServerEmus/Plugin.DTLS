@@ -1,0 +1,32 @@
+﻿namespace Plugin.DTLS.Enums;
+
+public enum ExtensionType : ushort
+{
+    ServerName = 0,
+    MaxFragmentLength = 1,
+    ClientCertificateUrl = 2,
+    TrustedCAKeys = 3,
+    TruncatedHmac = 4,
+    StatusRequest = 5,
+    UserMapping = 6,
+    ClientAuthz = 7,
+    ServerAuthz = 8,
+    CertType = 9,
+    EllipticCurves = 10,
+    EllipticCurvePointFormats = 11,
+    SRP = 12,
+    SignatureAlgorithms = 13,
+    UseSrtp = 14,
+    Heartbeat = 15,
+    ApplicationLayerProtocolNegotiation = 16,
+    StatusRequestV2 = 17,
+    SignedCertificateTimestamp = 18,
+    ClientCertificateType = 19,
+    ServerCertificateType = 20,
+    Padding = 21,
+    EncryptThenMAC = 22,
+    ExtendedMasterSecret = 23,
+    SessionTicketTLS = 35,
+    RenegotiationInfo = 65281,
+    Unknown = ushort.MaxValue,
+}

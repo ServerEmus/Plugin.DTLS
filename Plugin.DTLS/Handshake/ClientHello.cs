@@ -1,6 +1,10 @@
 ﻿using Plugin.DTLS.Enums;
+using Plugin.DTLS.Extensions;
+using Serilog;
 using ServerShared.IO;
 using System.Net.Security;
+using System.Reflection.PortableExecutable;
+
 namespace Plugin.DTLS.Handshake;
 
 public struct ClientHello : IHandshake
@@ -13,7 +17,7 @@ public struct ClientHello : IHandshake
     public byte[] Cookie = [];
     public TlsCipherSuite[] CipherSuites = [];
     public byte[] CompressionMethods = [];
-    // Extensions!!
+    public List<IExtension> Extensions = [];
 
     public void Deserialize(BinaryReaderBig stream)
     {
@@ -47,9 +51,24 @@ public struct ClientHello : IHandshake
             CompressionMethods = new byte[length];
             stream.Read(CompressionMethods, 0, length);
         }
+        Extensions.Clear();
+        if (stream.BaseStream.Position == stream.BaseStream.Length)
+            return;
+        long extensionLength = stream.ReadUInt16();
+        if (extensionLength == 0)
+            return;
+        long endLen = stream.BaseStream.Position + extensionLength;
+        while (extensionLength != endLen)
+        {
+            ExtensionType extensionType = (ExtensionType)stream.ReadUInt16();
+            IExtension extension = MainStorage.GetExtension(extensionType);
+            extension.Deserialize(stream);
+            Extensions.Add(extension);
+            extensionLength = stream.BaseStream.Position;
+        }
     }
 
-    public void Serialize(BinaryWriterBig stream)
+    public readonly void Serialize(BinaryWriterBig stream)
     {
         
     }
@@ -60,6 +79,7 @@ public struct ClientHello : IHandshake
             $", SessionID: {Convert.ToBase64String(SessionID)} ({SessionID.Length})" +
             $", Cookie: {Convert.ToBase64String(Cookie)} ({Cookie.Length})" +
             $", CipherSuites: {string.Join(", ", CipherSuites)}" +
-            $", CompressionMethods: {string.Join(", ", CompressionMethods)}";
+            $", CompressionMethods: {string.Join(", ", CompressionMethods)}" +
+            $", Extensions: {string.Join(", ", Extensions)}";
     }
 }

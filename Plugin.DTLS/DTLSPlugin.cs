@@ -20,20 +20,22 @@ public class DTLSPlugin : ServerPlugin
     {
         if (ServerController.IsPortUsed(PORT))
             return;
+        /*
         string certPath = Path.Combine(Directory.GetCurrentDirectory(), "Cert");
         var ecdsa = ECDsa.Create();
         string dtls_pfx = Path.Combine(certPath, "dtls.pfx");
         X509Certificate2? cert = null;
         if (File.Exists(dtls_pfx))
-            cert = X509CertificateLoader.LoadPkcs12FromFile(dtls_pfx, "");
+            cert = X509CertificateLoader.LoadPkcs12FromFile(dtls_pfx, "test");
         else
             cert = CertGen.CreateCert("dtls", ecdsa, HashAlgorithmName.SHA256);
+        */
         ServerController.Start(new ServerShared.CommonModels.ServerModel()
         {
             Name = "DTLS",
             Port = PORT,
+            IsSecure = true,
             IsUdp = true,
-            Context = new(System.Security.Authentication.SslProtocols.Tls12, cert, CertHelper.NoCertificateValidator)
         });
         CoreSslUdpSession.OnBytesReceived += DtlHandler.CoreSslUdpSession_OnBytesReceived;
     }    

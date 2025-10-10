@@ -1,7 +1,6 @@
 ﻿using Plugin.DTLS.ContentTypes;
 using Plugin.DTLS.Enums;
 using Plugin.DTLS.Records;
-using ServerShared.IO;
 
 namespace Plugin.DTLS.ContentProcessor;
 
