@@ -1,27 +1,30 @@
 ﻿using Plugin.DTLS.Enums;
+using Plugin.DTLS.Interfaces;
 using ServerShared.IO;
 
 namespace Plugin.DTLS.Extensions;
 
-public struct UnknownExtension() : IExtension
+public struct UnknownExtension() : IExtension, ISize
 {
     public byte[] Data = [];
     public ExtensionType Type { get; set; } = ExtensionType.Unknown;
+    public ushort ExtensionLength { get; set; }
+    public readonly ushort Size => (ushort)(Data.Length + sizeof(ushort));
 
     public void Deserialize(BinaryReaderBig reader)
     {
-        long len = reader.ReadUInt16();
-        Data = reader.ReadBytes((int)len);
+        Data = reader.ReadBytes(ExtensionLength);
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public void Serialize(BinaryWriterBig writer)
     {
-        writer.Write((uint)Data.Length);
+        ExtensionLength = (ushort)Data.Length;
+        writer.Write(ExtensionLength);
         writer.Write(Data);
     }
 
     public readonly override string ToString()
     {
-        return $"{Type}";
+        return $"{Type} {ExtensionLength}";
     }
 }

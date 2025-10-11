@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="DTLS.Test/DTLS.Test.csproj" Id="0a5ffc2a-5162-47a1-a356-7ea7703a5798" />
+  <Project Path="Plugin.DTLS/Plugin.DTLS.csproj" />
+</Solution>

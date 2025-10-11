@@ -1,15 +1,13 @@
 ﻿using Plugin.DTLS.Enums;
 using Plugin.DTLS.Extensions;
-using Serilog;
+using Plugin.DTLS.Interfaces;
 using ServerShared.IO;
 using System.Net.Security;
-using System.Reflection.PortableExecutable;
 
 namespace Plugin.DTLS.Handshake;
 
-public struct ClientHello : IHandshake
+public struct ClientHello() : IHandshake
 {
-    public ClientHello() { }
     public readonly HandshakeType Type => HandshakeType.ClientHello;
     public ProtocolVersion Version = ProtocolVersion.DefaultVersion;
     public byte[] Random = [];
@@ -23,54 +21,78 @@ public struct ClientHello : IHandshake
     {
         stream.ReadSerializable(ref Version);
         Random = stream.ReadBytes(32);
+
         byte length = stream.ReadByte();
-        if (length > 0)
-        {
-            SessionID = new byte[length];
-            stream.Read(SessionID, 0, length);
-        }
+        SessionID = stream.ReadBytes(length);
 
         length = stream.ReadByte();
-        if (length > 0)
-        {
-            Cookie = new byte[length];
-            stream.Read(Cookie, 0, length);
-        }
-        ushort cipherSuitesLength = (ushort)(stream.ReadUInt16() / 2);
+        Cookie = stream.ReadBytes(length);
+
+        ushort cipherSuitesLength = (ushort)(stream.ReadUInt16() / sizeof(TlsCipherSuite));
         if (cipherSuitesLength > 0)
         {
             CipherSuites = new TlsCipherSuite[cipherSuitesLength];
-            for (uint index = 0; index < cipherSuitesLength; index++)
+            for (ushort index = 0; index < cipherSuitesLength; index++)
             {
                 CipherSuites[index] = (TlsCipherSuite)stream.ReadUInt16();
             }
         }
         length = stream.ReadByte();
-        if (length > 0)
-        {
-            CompressionMethods = new byte[length];
-            stream.Read(CompressionMethods, 0, length);
-        }
+        CompressionMethods = stream.ReadBytes(length);
+
         Extensions.Clear();
         if (stream.BaseStream.Position == stream.BaseStream.Length)
             return;
-        long extensionLength = stream.ReadUInt16();
-        if (extensionLength == 0)
+        ushort ExtensionsLength = stream.ReadUInt16();
+        if (ExtensionsLength == 0)
             return;
-        long endLen = stream.BaseStream.Position + extensionLength;
-        while (extensionLength != endLen)
+
+        long endLen = stream.BaseStream.Position + ExtensionsLength;
+        while (endLen != stream.BaseStream.Position)
         {
             ExtensionType extensionType = (ExtensionType)stream.ReadUInt16();
+            ushort extensionLength = stream.ReadUInt16();
             IExtension extension = MainStorage.GetExtension(extensionType);
+            extension.ExtensionLength = extensionLength;
             extension.Deserialize(stream);
             Extensions.Add(extension);
-            extensionLength = stream.BaseStream.Position;
         }
     }
 
-    public readonly void Serialize(BinaryWriterBig stream)
+    public readonly void Serialize(BinaryWriterBig writer)
     {
-        
+        writer.WriteSerializable(Version);
+        writer.Write(Random);
+        writer.Write((byte)SessionID.Length);
+        writer.Write(SessionID);
+        writer.Write((byte)Cookie.Length);
+        writer.Write(Cookie);
+        writer.Write((ushort)(CipherSuites.Length * sizeof(TlsCipherSuite)));
+        foreach (TlsCipherSuite cipherSuite in CipherSuites)
+        {
+            writer.Write((ushort)cipherSuite);
+        }
+        writer.Write((byte)CompressionMethods.Length);
+        writer.Write(CompressionMethods);
+
+        if (Extensions.Count == 0)
+        {
+            writer.Write((ushort)0);
+            return;
+        }
+        ushort ExtensionsLength = (ushort)Extensions.Sum(static ext =>
+        {
+            if (ext is ISize size)
+                return size.Size + sizeof(ushort);
+            return ext.ExtensionLength + sizeof(ushort);
+        });
+        writer.Write(ExtensionsLength);
+
+        foreach (var extension in Extensions)
+        {
+            writer.Write((ushort)extension.Type);
+            extension.Serialize(writer);
+        }
     }
 
     public readonly override string ToString()

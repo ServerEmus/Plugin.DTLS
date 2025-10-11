@@ -17,6 +17,10 @@ public static class MainStorage
         new ClientHello(),
         new ServerHello(),
         new HelloVerifyRequest(),
+        new NewSessionTicket(),
+        new EndOfEarlyData(),
+        new Certificate(),
+        new ServerHelloDone(),
     ];
 
     static readonly List<IRecord> Records =
@@ -37,6 +41,8 @@ public static class MainStorage
         new EllipticCurvePointFormatsExtension(),
         new EllipticCurvesExtension(),
         new SignatureAlgorithmsExtension(),
+        new ClientCertificateTypeExtension(),
+        new ServerCertificateTypeExtension(),
     ];
 
     static readonly List<IContentProcessor> ContentProcessor =

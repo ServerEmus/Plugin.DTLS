@@ -3,11 +3,8 @@ using ServerShared.IO;
 
 namespace Plugin.DTLS.Handshake;
 
-public struct HelloVerifyRequest : IHandshake
+public struct HelloVerifyRequest() : IHandshake
 {
-    public HelloVerifyRequest()
-    {
-    }
     public readonly HandshakeType Type => HandshakeType.HelloVerifyRequest;
     public ProtocolVersion ServerVersion = ProtocolVersion.DefaultVersion;
     public byte[] Cookie = [];
@@ -16,21 +13,14 @@ public struct HelloVerifyRequest : IHandshake
     {
         stream.ReadSerializable(ref ServerVersion);
         byte len = stream.ReadByte();
-        if (len > 0)
-        {
-            Cookie = new byte[len];
-            stream.Read(Cookie, 0, len);
-        }
+        Cookie = stream.ReadBytes(len);
     }
 
     public readonly void Serialize(BinaryWriterBig stream)
     {
         stream.WriteSerializable(ServerVersion);
         stream.Write((byte)Cookie.Length);
-        foreach (var item in Cookie)
-        {
-            stream.Write(item);
-        }
+        stream.Write(Cookie);
     }
 
     public readonly override string ToString()

@@ -1,47 +1,35 @@
 ﻿using Plugin.DTLS.Enums;
+using Plugin.DTLS.Interfaces;
 using ServerShared.IO;
 
 namespace Plugin.DTLS.Extensions;
 
-public struct EllipticCurvePointFormatsExtension() : IExtension
+public struct EllipticCurvePointFormatsExtension() : IExtension, ISize
 {
-    public List<short> PointFormats = [];
+    public List<byte> PointFormats = [];
     public readonly ExtensionType Type => ExtensionType.EllipticCurvePointFormats;
-
+    public ushort ExtensionLength { get; set; }
+    public readonly ushort Size => (ushort)(PointFormats.Count + sizeof(ushort) + sizeof(ushort));
     public readonly void Deserialize(BinaryReaderBig reader)
     {
         PointFormats.Clear();
-        long len = reader.ReadUInt16();
-        long endLen = reader.BaseStream.Position + len;
-        while (len != endLen)
+        int formatsLen = reader.ReadByte();
+        for (int i = 0; i < formatsLen; i++)
         {
-            PointFormats.Add(reader.ReadInt16());
-            len = reader.BaseStream.Position;
+            PointFormats.Add(reader.ReadByte());
         }
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public void Serialize(BinaryWriterBig writer)
     {
-        if (!PointFormats.Contains(0) || (PointFormats.Count > 1 && PointFormats[0] != 0) )
+        ushort size = (ushort)PointFormats.Count;
+        ExtensionLength = (ushort)(size + sizeof(ushort));
+        writer.Write(ExtensionLength);
+        writer.Write((byte)PointFormats.Count);
+        foreach (byte curve in PointFormats)
         {
-            short temp = 0;
-            if (PointFormats.Count > 1)
-                temp = PointFormats[0];
-            PointFormats.Insert(0, 0);
-            if (temp != 0)
-                PointFormats.Add(temp);
+            writer.Write(curve);
         }
-
-        using MemoryStream memoryStream = new();
-        BinaryWriterBig writerBig = new(memoryStream);
-
-        foreach (short curve in PointFormats)
-        {
-            writerBig.Write(curve);
-        }
-
-        writer.Write((uint)memoryStream.Length);
-        writer.Write(memoryStream.ToArray());
     }
 
     public readonly override string ToString()

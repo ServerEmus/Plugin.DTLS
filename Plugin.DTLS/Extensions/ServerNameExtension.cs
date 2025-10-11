@@ -1,26 +1,39 @@
 ﻿using Plugin.DTLS.Enums;
+using Plugin.DTLS.Interfaces;
 using ServerShared.IO;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Plugin.DTLS.Extensions;
 
-public struct ServerName() : IBigSerializable
+public struct ServerName() : IBigSerializable , IEqualityComparer<ServerName>
 {
-    public short NameType;
+    public byte NameType;
     public byte[] NameData = [];
+    public static ServerName Empty => new();
+    public readonly uint Size => (uint)(sizeof(byte) + sizeof(ushort) + NameData.Length);
 
     public void Deserialize(BinaryReaderBig reader)
     {
         NameType = reader.ReadByte();
-        uint len = reader.ReadUInt16();
+        ushort len = reader.ReadUInt16();
         NameData = reader.ReadBytes((int)len);
+    }
+
+    public readonly bool Equals(ServerName x, ServerName y)
+    {
+        return x.NameType == y.NameType && x.NameData.SequenceEqual(y.NameData);
+    }
+
+    public readonly int GetHashCode([DisallowNull] ServerName obj)
+    {
+        return obj.NameType.GetHashCode() + 5 + obj.NameData.GetHashCode();
     }
 
     public readonly void Serialize(BinaryWriterBig writer)
     {
         writer.Write(NameType);
-        writer.Write((uint)NameData.Length);
+        writer.Write((ushort)NameData.Length);
         writer.Write(NameData);
     }
 
@@ -30,40 +43,40 @@ public struct ServerName() : IBigSerializable
     }
 }
 
-public struct ServerNameExtension() : IExtension
+public struct ServerNameExtension() : IExtension, ISize
 {
     public List<ServerName> Names = [];
     public readonly ExtensionType Type => ExtensionType.ServerName;
-
+    public ushort ExtensionLength { get; set; }
+    public readonly ushort Size => (ushort)(Names.Sum(static name => name.Size) + sizeof(ushort) + sizeof(ushort));
     public readonly void Deserialize(BinaryReaderBig reader)
     {
         Names.Clear();
         List<short> NameTypesSeen = [];
-        long len = reader.ReadUInt16();
-        long endLen = reader.BaseStream.Position + len;
-        while (len != endLen)
+        uint lengthOfTheList = reader.ReadUInt16(); // list Len.
+        uint readed = 0;
+        while (lengthOfTheList != readed)
         {
             ServerName name = reader.ReadSerializable<ServerName>();
             if (NameTypesSeen.Contains(name.NameType))
-                throw new Exception("This name type already seen!");
+                throw new Exception($"This name type already seen! {string.Join(", ", NameTypesSeen)} {name.NameType}");
 
             NameTypesSeen.Add(name.NameType);
             Names.Add(name);
-            len = reader.BaseStream.Position;
-        }
+            readed += name.Size;
+        } 
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public void Serialize(BinaryWriterBig writer)
     {
-        using MemoryStream memoryStream = new();
-        BinaryWriterBig writerBig = new(memoryStream);
+        ushort len = (ushort)Names.Sum(static name => name.Size);
+        ExtensionLength = (ushort)(len + sizeof(ushort));
+        writer.Write(ExtensionLength);
+        writer.Write(len);
         foreach (ServerName name in Names)
         {
-            writerBig.WriteSerializable(name);
+            writer.WriteSerializable(name);
         }
-
-        writer.Write((uint)memoryStream.Length);
-        writer.Write(memoryStream.ToArray());
     }
 
     public readonly override string ToString()

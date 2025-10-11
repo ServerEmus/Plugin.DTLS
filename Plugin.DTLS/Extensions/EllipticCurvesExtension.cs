@@ -1,36 +1,36 @@
 ﻿using Plugin.DTLS.Enums;
+using Plugin.DTLS.Interfaces;
 using ServerShared.IO;
 
 namespace Plugin.DTLS.Extensions;
 
-public struct EllipticCurvesExtension() : IExtension
+public struct EllipticCurvesExtension() : IExtension, ISize
 {
-    public List<short> EllipticCurves = [];
+    public List<EllipticCurve> EllipticCurves = [];
     public readonly ExtensionType Type => ExtensionType.EllipticCurves;
-
+    public ushort ExtensionLength { get; set; }
+    public readonly ushort Size => (ushort)((EllipticCurves.Count * sizeof(EllipticCurve)) + sizeof(ushort) + sizeof(ushort));
     public readonly void Deserialize(BinaryReaderBig reader)
     {
         EllipticCurves.Clear();
-        long len = reader.ReadUInt16();
-        long endLen = reader.BaseStream.Position + len;
-        while (len != endLen)
+        uint count = (uint)(reader.ReadUInt16() / sizeof(EllipticCurve));
+        for (int i = 0; i < count; i++)
         {
-            EllipticCurves.Add(reader.ReadInt16());
-            len = reader.BaseStream.Position;
+            EllipticCurve curve = (EllipticCurve)reader.ReadUInt16();
+            EllipticCurves.Add(curve);
         }
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public void Serialize(BinaryWriterBig writer)
     {
-        using MemoryStream memoryStream = new();
-        BinaryWriterBig writerBig = new(memoryStream);
-        foreach (short curve in EllipticCurves)
+        ushort size = (ushort)(EllipticCurves.Count * sizeof(EllipticCurve));
+        ExtensionLength = (ushort)(size + sizeof(ushort));
+        writer.Write(ExtensionLength);
+        writer.Write(size);
+        foreach (EllipticCurve curve in EllipticCurves)
         {
-            writerBig.Write(curve);
+            writer.Write((ushort)curve);
         }
-
-        writer.Write((uint)memoryStream.Length);
-        writer.Write(memoryStream.ToArray());
     }
 
     public readonly override string ToString()
