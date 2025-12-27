@@ -10,13 +10,13 @@ internal class Alert : IContent
 
     public ContentType Type => ContentType.Alert;
 
-    public void Deserialize(BinaryReaderBig stream)
+    public void Deserialize(EndiannessReader stream)
     {
         Level = (AlertLevel)stream.ReadByte();
         Description = (AlertDescription)stream.ReadByte();
     }
 
-    public void Serialize(BinaryWriterBig stream)
+    public void Serialize(EndiannessWriter stream)
     {
         stream.Write((byte)Level);
         stream.Write((byte)Description);

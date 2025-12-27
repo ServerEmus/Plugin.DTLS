@@ -9,14 +9,14 @@ public struct HelloVerifyRequest() : IHandshake
     public ProtocolVersion ServerVersion = ProtocolVersion.DefaultVersion;
     public byte[] Cookie = [];
 
-    public void Deserialize(BinaryReaderBig stream)
+    public void Deserialize(EndiannessReader stream)
     {
-        stream.ReadSerializable(ref ServerVersion);
+        ServerVersion = stream.ReadSerializable<ProtocolVersion>();
         byte len = stream.ReadByte();
         Cookie = stream.ReadBytes(len);
     }
 
-    public readonly void Serialize(BinaryWriterBig stream)
+    public readonly void Serialize(EndiannessWriter stream)
     {
         stream.WriteSerializable(ServerVersion);
         stream.Write((byte)Cookie.Length);
@@ -25,7 +25,8 @@ public struct HelloVerifyRequest() : IHandshake
 
     public readonly override string ToString()
     {
-        return $"ServerVersion: {ServerVersion}" +
-            $", Cookie: {Convert.ToBase64String(Cookie)} ({Cookie.Length})";
+        return $"({Type}) " +
+               $"ServerVersion: {ServerVersion}" +
+               $", Cookie: {Convert.ToBase64String(Cookie)} ({Cookie.Length})";
     }
 }

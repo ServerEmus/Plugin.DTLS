@@ -3,7 +3,7 @@ using ServerShared.IO;
 
 namespace Plugin.DTLS.Handshake;
 
-public interface IHandshake : IBigSerializable
+public interface IHandshake : ICustomSerializable
 {
     public HandshakeType Type { get; }
 }

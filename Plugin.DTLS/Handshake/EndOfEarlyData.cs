@@ -7,12 +7,12 @@ public struct EndOfEarlyData() : IHandshake
 {
     public readonly HandshakeType Type => HandshakeType.EndOfEarlyData;
 
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         
     }

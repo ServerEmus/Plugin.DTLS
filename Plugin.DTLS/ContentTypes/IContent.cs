@@ -3,7 +3,7 @@ using ServerShared.IO;
 
 namespace Plugin.DTLS.ContentTypes;
 
-public interface IContent : IBigSerializable
+public interface IContent : ICustomSerializable
 {
     public ContentType Type { get; }
 }

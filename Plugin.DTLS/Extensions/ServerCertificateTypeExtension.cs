@@ -11,12 +11,12 @@ public struct ServerCertificateTypeExtension() : IExtension, ISize
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => sizeof(CertificateType) + sizeof(ushort);
 
-    public void Deserialize(BinaryReaderBig reader)
+    public void Deserialize(EndiannessReader reader)
     {
         Certificate = (CertificateType)reader.ReadByte();
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         writer.Write((byte)Certificate);
     }

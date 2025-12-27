@@ -11,12 +11,12 @@ public struct UnknownExtension() : IExtension, ISize
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => (ushort)(Data.Length + sizeof(ushort));
 
-    public void Deserialize(BinaryReaderBig reader)
+    public void Deserialize(EndiannessReader reader)
     {
         Data = reader.ReadBytes(ExtensionLength);
     }
 
-    public void Serialize(BinaryWriterBig writer)
+    public void Serialize(EndiannessWriter writer)
     {
         ExtensionLength = (ushort)Data.Length;
         writer.Write(ExtensionLength);

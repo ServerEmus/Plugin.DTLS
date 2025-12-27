@@ -10,7 +10,7 @@ public struct EllipticCurvePointFormatsExtension() : IExtension, ISize
     public readonly ExtensionType Type => ExtensionType.EllipticCurvePointFormats;
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => (ushort)(PointFormats.Count + sizeof(ushort) + sizeof(ushort));
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         PointFormats.Clear();
         int formatsLen = reader.ReadByte();
@@ -20,7 +20,7 @@ public struct EllipticCurvePointFormatsExtension() : IExtension, ISize
         }
     }
 
-    public void Serialize(BinaryWriterBig writer)
+    public void Serialize(EndiannessWriter writer)
     {
         ushort size = (ushort)PointFormats.Count;
         ExtensionLength = (ushort)(size + sizeof(ushort));

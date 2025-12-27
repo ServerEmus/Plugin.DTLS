@@ -17,7 +17,7 @@ public class HandshakeHeader : IContent
     public byte[] Payload = [];
     public ContentType Type => ContentType.Handshake;
 
-    public void Deserialize(BinaryReaderBig stream)
+    public void Deserialize(EndiannessReader stream)
     {
         HandshakeType = (HandshakeType)stream.ReadByte();
         Length = stream.ReadUInt24();
@@ -27,7 +27,7 @@ public class HandshakeHeader : IContent
         Payload = stream.ReadBytes((int)(uint)FragmentLength);
     }
 
-    public void Serialize(BinaryWriterBig stream)
+    public void Serialize(EndiannessWriter stream)
     {
         stream.Write((byte)HandshakeType);
         stream.WriteUInt24(Length);

@@ -2,7 +2,6 @@
 using Plugin.DTLS.Extensions;
 using Plugin.DTLS.Interfaces;
 using ServerShared.IO;
-using System.Net;
 using System.Net.Security;
 
 namespace Plugin.DTLS.Handshake;
@@ -17,9 +16,9 @@ public struct ServerHello() : IHandshake
     public byte CompressionMethod = 0;
     public List<IExtension> Extensions = [];
 
-    public void Deserialize(BinaryReaderBig reader)
+    public void Deserialize(EndiannessReader reader)
     {
-        reader.ReadSerializable(ref Version);
+        Version = reader.ReadSerializable<ProtocolVersion>();
         Random = reader.ReadBytes(32);
 
         byte length = reader.ReadByte();
@@ -47,7 +46,7 @@ public struct ServerHello() : IHandshake
         }
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         writer.WriteSerializable(Version);
         writer.Write(Random);
@@ -78,7 +77,8 @@ public struct ServerHello() : IHandshake
 
     public readonly override string ToString()
     {
-        return $"v:{Version} Random: {Convert.ToBase64String(Random)} ({Random.Length})" +
+        return $"({Type}) " +
+            $"v:{Version} Random: {Convert.ToBase64String(Random)} ({Random.Length})" +
             $", SessionID: {Convert.ToBase64String(SessionID)} ({SessionID.Length})" +
             $", CipherSuite: {CipherSuite}" +
             $", CompressionMethod: {CompressionMethod}" +

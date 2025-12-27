@@ -23,7 +23,7 @@ internal class HandshakeProcessor : IContentProcessor
         }
         using BinaryReaderBig plainTextReader = new(new MemoryStream(handshake.Payload));
         ihandshake.Deserialize(plainTextReader);
-        Log.Information("Readed IHandshake: {ihandshake}", ihandshake);
+        Log.Information("Processing IHandshake: {ihandshake}", ihandshake);
         MainStorage.ProcessHandshake(session, ref record, ref handshake, ihandshake);
     }
 }

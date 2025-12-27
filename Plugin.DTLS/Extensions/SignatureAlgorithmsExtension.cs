@@ -4,20 +4,20 @@ using ServerShared.IO;
 
 namespace Plugin.DTLS.Extensions;
 
-public struct SignatureAndHashAlgorithm() : IBigSerializable
+public struct SignatureAndHashAlgorithm() : ICustomSerializable
 {
     public static uint Size => sizeof(HashAlgorithm) + sizeof(HashAlgorithm);
 
     public HashAlgorithm Hash;
     public SignatureAlgorithm Signature;
 
-    public void Deserialize(BinaryReaderBig reader)
+    public void Deserialize(EndiannessReader reader)
     {
         Hash = (HashAlgorithm)reader.ReadByte();
         Signature = (SignatureAlgorithm)reader.ReadByte();
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         writer.Write((byte)Hash);
         writer.Write((byte)Signature);
@@ -36,7 +36,7 @@ public struct SignatureAlgorithmsExtension() : IExtension, ISize
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => (ushort)((SignatureAlgorithms.Count * SignatureAndHashAlgorithm.Size) + sizeof(ushort) + sizeof(ushort));
 
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         SignatureAlgorithms.Clear();
         uint count = reader.ReadUInt16() / SignatureAndHashAlgorithm.Size;
@@ -47,7 +47,7 @@ public struct SignatureAlgorithmsExtension() : IExtension, ISize
         }
     }
 
-    public  void Serialize(BinaryWriterBig writer)
+    public  void Serialize(EndiannessWriter writer)
     {
         ushort len = (ushort)(SignatureAlgorithms.Count * SignatureAndHashAlgorithm.Size);
         ExtensionLength = (ushort)(len + sizeof(ushort));

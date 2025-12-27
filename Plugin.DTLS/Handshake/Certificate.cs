@@ -21,7 +21,7 @@ public struct Certificate() : IHandshake
     public CertificateType CertificateType;
     public readonly HandshakeType Type =>  HandshakeType.Certificate;
 
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         CertChain.Clear();
         var certChainLen = reader.ReadInt24();
@@ -48,7 +48,7 @@ public struct Certificate() : IHandshake
 
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         Int24 len = 3;
         switch (CertificateType)

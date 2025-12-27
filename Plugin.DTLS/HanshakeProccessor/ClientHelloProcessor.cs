@@ -4,12 +4,7 @@ using Plugin.DTLS.Handshake;
 using Plugin.DTLS.Records;
 using Serilog;
 using ServerShared.IO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Plugin.DTLS.HanshakeProccessor;
 
@@ -25,39 +20,15 @@ internal class ClientHelloProcessor : IHandshakeProcessor
         var cookie = CreateCoockie(session, clientHello.Random);
         if (clientHello.Cookie.Length == 0)
         {
-            HelloVerifyRequest helloVerifyRequest = new()
-            { 
-                Cookie = cookie,
-                ServerVersion = session.ProtocolVersion,
-            };
-            // TODOD: make a better thank here.
-            Log.Information("Sending: {HVR}", helloVerifyRequest);
-            MemoryStream mem = new();
-            BinaryWriterBig writerBig = new(mem);
-            helloVerifyRequest.Serialize(writerBig);
-            writerBig.Flush();
-            Log.Information("Sending: {HVR} (Size: {Size})", helloVerifyRequest, mem.Length);
-            content.HandshakeType = helloVerifyRequest.Type;
-            content.Reset();
-            content.Length = (ServerShared.Types.UInt24)mem.Length;
-            content.FragmentLength = (ServerShared.Types.UInt24)mem.Length;
-            content.Payload = mem.ToArray();
-            Log.Information("Sending: {content}", content);
-            mem = new();
-            writerBig = new(mem);
-            content.Serialize(writerBig);
-            writerBig.Flush();
-            Log.Information("Sending: {content} (Size: {Size})", content, mem.Length);
-            record.Fragment = mem.ToArray();
-            Log.Information("Sending: {record}", record);
-            mem = new();
-            writerBig = new(mem);
-            record.Serialize(writerBig);
-            writerBig.Flush();
-            Log.Information("Sending: {record} (Size: {Size})", record, mem.Length);
-            session.Session.Send(mem.ToArray());
+            session.Session.Send(CreateVerifyRequest(session, ref record, ref content, cookie));
             return;
         }
+        if (!clientHello.Cookie.SequenceEqual(cookie))
+        {
+            Log.Warning("Client hello cookie is not the same as we made it.");
+            return;
+        }
+        // create new sessionId and send ServerHello
     }
 
     private static byte[] CreateCoockie(DtlsSession session, byte[] random)
@@ -66,5 +37,37 @@ internal class ClientHelloProcessor : IHandshakeProcessor
         stream.Write(session.Session.EndPoint.Serialize().Buffer.Span);
         stream.Write(random);
         return [.. new HMACSHA256(Key).ComputeHash(stream.ToArray()).Take(32)];
+    }
+
+    private static byte[] CreateVerifyRequest(DtlsSession session, ref DTLSPlaintext record, ref HandshakeHeader content, byte[] cookie)
+    {
+        HelloVerifyRequest helloVerifyRequest = new()
+        {
+            Cookie = cookie,
+            ServerVersion = session.ProtocolVersion,
+        };
+
+        MemoryStream mem = new();
+        BinaryWriterBig writerBig = new(mem);
+        helloVerifyRequest.Serialize(writerBig);
+        writerBig.Flush();
+        Log.Information("Packing: {HVR} (Size: {Size})", helloVerifyRequest, mem.Length);
+        content.HandshakeType = helloVerifyRequest.Type;
+        content.Reset();
+        content.Length = (ServerShared.Types.UInt24)mem.Length;
+        content.FragmentLength = (ServerShared.Types.UInt24)mem.Length;
+        content.Payload = mem.ToArray();
+        mem = new();
+        writerBig = new(mem);
+        content.Serialize(writerBig);
+        writerBig.Flush();
+        Log.Information("Packing: {content} (Size: {Size})", content, mem.Length);
+        record.Fragment = mem.ToArray();
+        mem = new();
+        writerBig = new(mem);
+        record.Serialize(writerBig);
+        writerBig.Flush();
+        Log.Information("Sending: {record} (Size: {Size})", record, mem.Length);
+        return mem.ToArray();
     }
 }

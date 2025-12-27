@@ -20,7 +20,7 @@ public static class TestHelpers
         return (newExt, extensionLen, len);
     }
 
-    public static (T ser, long writeLen, long readLen) SerAndDeser<T>(this T ser) where T : IBigSerializable, new()
+    public static (T ser, long writeLen, long readLen) SerAndDeser<T>(this T ser) where T : ICustomSerializable, new()
     {
         using MemoryStream ms = new();
         using BinaryWriterBig writerBig = new(ms);

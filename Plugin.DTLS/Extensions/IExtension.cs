@@ -3,7 +3,7 @@ using ServerShared.IO;
 
 namespace Plugin.DTLS.Extensions;
 
-public interface IExtension : IBigSerializable
+public interface IExtension : ICustomSerializable
 {
     public ExtensionType Type { get; }
 

@@ -17,9 +17,9 @@ public struct ClientHello() : IHandshake
     public byte[] CompressionMethods = [];
     public List<IExtension> Extensions = [];
 
-    public void Deserialize(BinaryReaderBig stream)
+    public void Deserialize(EndiannessReader stream)
     {
-        stream.ReadSerializable(ref Version);
+        Version = stream.ReadSerializable<ProtocolVersion>();
         Random = stream.ReadBytes(32);
 
         byte length = stream.ReadByte();
@@ -59,7 +59,7 @@ public struct ClientHello() : IHandshake
         }
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         writer.WriteSerializable(Version);
         writer.Write(Random);
@@ -97,7 +97,8 @@ public struct ClientHello() : IHandshake
 
     public readonly override string ToString()
     {
-        return $"v:{Version} Random: {Convert.ToBase64String(Random)} ({Random.Length})" +
+        return $"({Type}) " +
+            $"v:{Version} Random: {Convert.ToBase64String(Random)} ({Random.Length})" +
             $", SessionID: {Convert.ToBase64String(SessionID)} ({SessionID.Length})" +
             $", Cookie: {Convert.ToBase64String(Cookie)} ({Cookie.Length})" +
             $", CipherSuites: {string.Join(", ", CipherSuites)}" +

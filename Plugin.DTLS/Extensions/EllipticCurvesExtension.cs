@@ -10,7 +10,7 @@ public struct EllipticCurvesExtension() : IExtension, ISize
     public readonly ExtensionType Type => ExtensionType.EllipticCurves;
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => (ushort)((EllipticCurves.Count * sizeof(EllipticCurve)) + sizeof(ushort) + sizeof(ushort));
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         EllipticCurves.Clear();
         uint count = (uint)(reader.ReadUInt16() / sizeof(EllipticCurve));
@@ -21,7 +21,7 @@ public struct EllipticCurvesExtension() : IExtension, ISize
         }
     }
 
-    public void Serialize(BinaryWriterBig writer)
+    public void Serialize(EndiannessWriter writer)
     {
         ushort size = (ushort)(EllipticCurves.Count * sizeof(EllipticCurve));
         ExtensionLength = (ushort)(size + sizeof(ushort));

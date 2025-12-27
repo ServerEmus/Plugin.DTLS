@@ -16,6 +16,7 @@ internal class PlaintextProcessor : IRecordProcessor
             return;
         reader.BaseStream.Position = 0;
         plaintext.Deserialize(reader);
+        session.ProtocolVersion = plaintext.Version;
         Log.Information("Readed Record: {record}", plaintext);
         IContent? content = MainStorage.GetContent(plaintext.ContentType);
         if (content == null)

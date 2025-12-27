@@ -1,9 +1,8 @@
-﻿using Plugin.DTLS.ContentTypes;
-using Plugin.DTLS.Records;
+﻿using Plugin.DTLS.Records;
 using Serilog;
+using ServerShared.EventArguments;
 using ServerShared.IO;
 using ServerShared.Server;
-using System.Security.Cryptography;
 
 namespace Plugin.DTLS;
 
@@ -11,19 +10,19 @@ internal class DtlHandler
 {
     public static Dictionary<Guid, DtlsSession> Sessions = [];
 
-    public static void CoreSslUdpSession_OnBytesReceived(object? sender, byte[] e)
+    public static void CoreSslUdpSession_OnBytesReceived(object? sender, SessionBytesReceivedEventArgs args)
     {
-        CoreSslUdpSession Session = (CoreSslUdpSession)sender!;
+        CoreSslUdpSession Session = (CoreSslUdpSession)args.Session!;
         if (Session.Server.Port != DTLSPlugin.PORT)
             return;
-        if (e.Length < 1)
+        if (args.Data.Length < 1)
             return;
         DtlsSession? dtlsSession;
         if (Sessions.TryGetValue(Session.Id, out var _dtls))
             dtlsSession = _dtls;
         else
             dtlsSession = new(Session);
-        using BinaryReaderBig mainReader = new(new MemoryStream(e));
+        using BinaryReaderBig mainReader = new(new MemoryStream(args.Data.ToArray()));
         Common common = Common.Parse(mainReader);
         Log.Information("RecordType: {Type}, ContentType: {Content}", common.RecordType, common.ContentType);
         IRecord? record = MainStorage.GetRecord(common.RecordType);

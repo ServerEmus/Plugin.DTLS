@@ -6,14 +6,14 @@ using System.Text;
 
 namespace Plugin.DTLS.Extensions;
 
-public struct ServerName() : IBigSerializable , IEqualityComparer<ServerName>
+public struct ServerName() : ICustomSerializable, IEqualityComparer<ServerName>
 {
     public byte NameType;
     public byte[] NameData = [];
     public static ServerName Empty => new();
     public readonly uint Size => (uint)(sizeof(byte) + sizeof(ushort) + NameData.Length);
 
-    public void Deserialize(BinaryReaderBig reader)
+    public void Deserialize(EndiannessReader reader)
     {
         NameType = reader.ReadByte();
         ushort len = reader.ReadUInt16();
@@ -30,7 +30,7 @@ public struct ServerName() : IBigSerializable , IEqualityComparer<ServerName>
         return obj.NameType.GetHashCode() + 5 + obj.NameData.GetHashCode();
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         writer.Write(NameType);
         writer.Write((ushort)NameData.Length);
@@ -49,7 +49,7 @@ public struct ServerNameExtension() : IExtension, ISize
     public readonly ExtensionType Type => ExtensionType.ServerName;
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => (ushort)(Names.Sum(static name => name.Size) + sizeof(ushort) + sizeof(ushort));
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         Names.Clear();
         List<short> NameTypesSeen = [];
@@ -67,7 +67,7 @@ public struct ServerNameExtension() : IExtension, ISize
         } 
     }
 
-    public void Serialize(BinaryWriterBig writer)
+    public void Serialize(EndiannessWriter writer)
     {
         ushort len = (ushort)Names.Sum(static name => name.Size);
         ExtensionLength = (ushort)(len + sizeof(ushort));

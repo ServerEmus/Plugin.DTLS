@@ -9,14 +9,14 @@ public struct NewSessionTicket() : IHandshake
     public byte[] Ticket = [];
     public readonly HandshakeType Type => HandshakeType.NewSessionTicket;
 
-    public void Deserialize(BinaryReaderBig reader)
+    public void Deserialize(EndiannessReader reader)
     {
         LifetimeHint = reader.ReadUInt32();
         ushort len = reader.ReadUInt16();
         Ticket = reader.ReadBytes(len);
     }
 
-    public readonly void Serialize(BinaryWriterBig writer)
+    public readonly void Serialize(EndiannessWriter writer)
     {
         writer.Write(LifetimeHint);
         writer.Write((ushort)Ticket.Length);
@@ -25,7 +25,8 @@ public struct NewSessionTicket() : IHandshake
 
     public readonly override string ToString()
     {
-        return $"LifetimeHint: {LifetimeHint}" +
-            $", Ticket: {Convert.ToBase64String(Ticket)} ({Ticket.Length})";
+        return $"({Type}) " +
+               $"LifetimeHint: {LifetimeHint}" +
+               $", Ticket: {Convert.ToBase64String(Ticket)} ({Ticket.Length})";
     }
 }

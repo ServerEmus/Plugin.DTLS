@@ -11,7 +11,7 @@ public struct ClientCertificateTypeExtension() : IExtension, ISize
     public ushort ExtensionLength { get; set; }
     public readonly ushort Size => (ushort)(CertificateTypes.Count + sizeof(ushort) + sizeof(ushort));
 
-    public readonly void Deserialize(BinaryReaderBig reader)
+    public readonly void Deserialize(EndiannessReader reader)
     {
         CertificateTypes.Clear();
         uint count = reader.ReadUInt16();
@@ -22,7 +22,7 @@ public struct ClientCertificateTypeExtension() : IExtension, ISize
         }
     }
 
-    public void Serialize(BinaryWriterBig writer)
+    public void Serialize(EndiannessWriter writer)
     {
         ushort size = (ushort)CertificateTypes.Count;
         ExtensionLength = (ushort)(size + sizeof(ushort));

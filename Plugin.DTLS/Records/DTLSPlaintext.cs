@@ -30,7 +30,7 @@ public struct DTLSPlaintext : IRecord
     }
 
 
-    public readonly void Serialize(BinaryWriterBig stream)
+    public readonly void Serialize(EndiannessWriter stream)
     {
         stream.Write((byte)ContentType);
         stream.WriteSerializable(Version);
@@ -43,7 +43,7 @@ public struct DTLSPlaintext : IRecord
         }
     }
 
-    public void Deserialize(BinaryReaderBig stream)
+    public void Deserialize(EndiannessReader stream)
     {
         ContentType = (ContentType)stream.ReadByte();
         Version = stream.ReadSerializable<ProtocolVersion>();
