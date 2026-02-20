@@ -7,16 +7,16 @@ using ServerShared.Server;
 
 namespace Plugin.DTLS;
 
-public class DtlsSession(CoreSslUdpSession session)
+public class DtlsSession(CoreSslUdpSession session, ServerConfig serverConfig)
 {
     public ushort Epoch { get; set; }
     public ProtocolVersion ProtocolVersion { get; set; } = ProtocolVersion.DefaultVersion;
-    public Guid SessionID { get; set; }
     public CoreSslUdpSession Session => session;
+    public ServerConfig Config => serverConfig;
     public ushort ClientEpoch { get; set; }
     public long ClientSequenceNumber { get; set; }
 
-    public void Send(ref DTLSPlaintext record, ref HandshakeHeader content, ref IHandshake handshake)
+    public void Send<T>(ref DTLSPlaintext record, ref HandshakeHeader content, ref T handshake) where T: IHandshake
     {
 
         MemoryStream mem = new();
